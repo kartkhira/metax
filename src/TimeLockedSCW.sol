@@ -9,7 +9,6 @@ contract Wallet {
     uint256 public unlockAt;
     address public factory;
 
-    //TODO : WHY use immutable here
     address payable immutable owner;
     
     error InvalidAccess(address);
@@ -21,9 +20,9 @@ contract Wallet {
     event TokenClaimed(address, uint);
     event EtherClaimed(uint);
 
-    constructor(address trustedForwarder,
-                address _owner,
-                uint256 _unlockAt) {
+    constructor(address _owner,
+                uint256 _unlockAt){
+
         factory = msg.sender;
         owner = payable(_owner);
         unlockAt = _unlockAt;
@@ -43,6 +42,7 @@ contract Wallet {
 
         IERC20(_ERC20).transferFrom(msg.sender, address(this), _amount);
         emit TokenDeposited(msg.sender, _ERC20, _amount);
+        success = true;
         
     }
     
@@ -53,12 +53,13 @@ contract Wallet {
     /**
      * Function to Facilitate Ether Claims
      */
-    function claimEthers(uint256 _amount) external onlyFactory returns(bool success){
+    function claimEthers(uint256 _amount) public onlyFactory returns(bool success){
 
         if(block.timestamp < unlockAt) revert TokensLocked(unlockAt);
 
         owner.transfer(_amount);
         emit EtherClaimed(_amount);
+        success = true;
     }
 
     /**
@@ -66,13 +67,14 @@ contract Wallet {
      * @param _ERC20 ERC20 Token to be withdrawn
      * @param _amount Amount of Token to  be withdrawn
      */
-    function claimTokens(address _ERC20, uint256 _amount) external onlyFactory returns(bool success){
+    function claimTokens(address _ERC20, uint256 _amount) public onlyFactory returns(bool success){
         
         if(block.timestamp < unlockAt) revert TokensLocked(unlockAt);
         if(_ERC20 == address(0)) revert InvalidToken(_ERC20);
 
         IERC20(_ERC20).transfer(owner, _amount);
         emit TokenClaimed(_ERC20, _amount);
+        success =  true;
 
     }
 

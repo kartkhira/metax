@@ -8,14 +8,14 @@ import {IWallet} from "./ITimeLockedWallet.sol";
 
 contract Factory is  ERC2771Context, Admin {
 
-    uint256 public lockDuration = 5 days;
-    address public trustedForwarder;
+    uint256 public lockDuration = 5 minutes;
 
     error WalletAlreadyExists(address);
     error NotForwarder(address);
+
     mapping(address => address) public registry;
 
-    constructor(address _forwarder) Admin() ERC2771Context(trustedForwarder){
+    constructor(address _forwarder) Admin() ERC2771Context(_forwarder){
 
     }
 
@@ -23,14 +23,6 @@ contract Factory is  ERC2771Context, Admin {
         if(!(isTrustedForwarder(msg.sender))) revert NotForwarder(msg.sender);
         _;
     }
-    
-    /**
-     * API to update the forwarder
-     */
-    function setTrustedForwarder(address _forwarder) external onlyAdmin {
-        trustedForwarder = _forwarder;
-    }
-
 
     /**
      * Public API to fetch wallet address
@@ -53,7 +45,7 @@ contract Factory is  ERC2771Context, Admin {
             revert WalletAlreadyExists(registry[msg.sender]);
         }
 
-        Wallet newWallet = new Wallet(trustedForwarder, msg.sender, block.timestamp + lockDuration);
+        Wallet newWallet = new Wallet(msg.sender, block.timestamp + lockDuration);
         registry[msg.sender] = address(newWallet);
 
     }
@@ -64,8 +56,9 @@ contract Factory is  ERC2771Context, Admin {
     function claimEthers(uint256 _amount) external onlyTrustedForwarder returns(bool success){
 
         if(registry[_msgSender()]!= address(0)){
-            IWallet(registry[_msgSender()]).claimEthers(_amount);
+            success = IWallet(registry[_msgSender()]).claimEthers(_amount);
         }
+        
     }
 
     /**
@@ -76,7 +69,7 @@ contract Factory is  ERC2771Context, Admin {
     function claimTokens(address _ERC20, uint256 _amount) external onlyTrustedForwarder returns(bool success){
         
         if(registry[_msgSender()]!= address(0)){
-            IWallet(registry[_msgSender()]).claimTokens(_ERC20, _amount);
+            success = IWallet(registry[_msgSender()]).claimTokens(_ERC20, _amount);
         }
 
     }

@@ -8,10 +8,8 @@ contract DeployScript is Script {
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address bicoForwarder = address(0xdfd);
         vm.broadcast(deployerPrivateKey);
-        Factory walletFactory = new Factory(bicoForwarder);
-
+        Factory walletFactory = new Factory(0xE041608922d06a4F26C0d4c27d8bCD01daf1f792);
         vm.stopBroadcast();
     }
 }
